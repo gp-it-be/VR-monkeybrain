@@ -6,10 +6,16 @@
 pointer = require 'pointer'
 
 
-function lovr.load()
+function initBoxes()
+  for x = -0.5, 0.5, .25 do
+    for y = .875, 1.5, .24999 do
+      local box = world:newBoxCollider(x, y, -2 - y / 5, .25)
+      table.insert(boxes, box)
+    end
+  end
+end
 
- --checkWorks =  lovr.headset:getPosition(lovr.headset)
- 
+function lovr.load() 
       world = lovr.physics.newWorld()
       world:setLinearDamping(.01)
       world:setAngularDamping(.005)
@@ -22,12 +28,7 @@ function lovr.load()
 
       -- Create boxes!
       boxes = {}
-      for x = -1, 1, .25 do
-        for y = .125, 2, .24999 do
-          local box = world:newBoxCollider(x, y, -2 - y / 5, .25)
-          table.insert(boxes, box)
-        end
-      end
+      initBoxes()
     
     
       lovr.timer.step() -- Reset the timer before the first update
@@ -42,6 +43,22 @@ function lovr.update(dt)
 
   pointer:update()
   world:update(dt)
+
+  local hit = pointer:getHit()
+  if hit then
+    for i,box in ipairs(boxes) do
+      if box == hit.collider then
+        local removedbox = table.remove(boxes, i)
+        removedbox:destroy()
+        
+      end 
+    end
+  end
+  
+
+  if next(boxes) == nil then
+    initBoxes()
+  end
 end
 
 
@@ -62,13 +79,13 @@ function lovr.draw()
   end
 
 
-    drawBox(1, 2)
-    drawBox(3, 2)
-    drawBox(8, 5)
-    drawBox(7, 4)
-    drawBox(0, 3)
-    drawBox(3, 6)
-    drawBox(4, 4)
+    -- drawBox(1, 2)
+    -- drawBox(3, 2)
+    -- drawBox(8, 5)
+    -- drawBox(7, 4)
+    -- drawBox(0, 3)
+    -- drawBox(3, 6)
+    -- drawBox(4, 4)
 
     for i, box in ipairs(boxes) do
       drawBox2(box, hit)
@@ -91,8 +108,6 @@ function drawBox2(box, hit)
 end
 
 
---https://lovr.org/docs/v0.15.0/World
---https://lovr.org/docs/v0.15.0/Physics/Boxes even better
 function drawBox(r, c)
     scale = 0.3
     x = (-10 + (2 * r )) * scale
@@ -101,10 +116,6 @@ function drawBox(r, c)
     boxSize = 0.7 * scale
     lovr.graphics.setColor(0.7, 0.6, 0)
     lovr.graphics.cube('fill', x , y , z,  boxSize, 0)
-    lovr.graphics.setColor(0.2, 0.2, 0.8)
-    -- lovr.graphics.print('17', x , y , z + (boxSize / 2) + (0.1 * scale), 0.3 * scale)
-    -- lovr.graphics.print(lovr.headset.getHands()[1]."hand/left", x , y , z + (boxSize / 2) + (0.1 * scale), 0.3 * scale)
-    lovr.graphics.print(lovr.headset.getPosition("hand/left"), x , y , z + (boxSize / 2) + (0.1 * scale), 0.3 * scale)
 end
 
 
