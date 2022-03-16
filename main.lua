@@ -5,24 +5,28 @@
      --]] pointer = require 'pointer'
 numberBlock = require 'numberBlock'
 
+-- #region Game
 local game = {}
 game.__index = game
 
 function game.new()
     local self = setmetatable({}, game)
     self.numbersVisible = true
+    self.mistakes = 0
+    self.round = 0
     return self
 end
 
 function game:startRound()
     self.numbersVisible = true
+    self.round = self.round + 1
 
     local usedCoordinates = {}
 
     boxes = {}
 
     local placedBlocks = 0
-    while placedBlocks < 5 do
+    while placedBlocks <= self.round do
 
         local r = math.random(0, 3)
         local c = math.random(0, 4)
@@ -47,11 +51,12 @@ function game:onHit(numberBlock)
         removedbox:destroy()
         self.numbersVisible = false
     else
-
+        self.mistakes = self.mistakes + 1
     end
 end
 
 function game:areNumbersVisible() return self.numbersVisible end
+-- #endregion Game
 
 function lovr.load()
     math.randomseed(os.time())
@@ -101,10 +106,8 @@ function lovr.update(dt)
             end
         end
     end
-    
-    if currentGame:isRoundFinished()
-     then currentGame:startRound()
-    end
+
+    if currentGame:isRoundFinished() then currentGame:startRound() end
 end
 
 function lovr.draw()
@@ -126,6 +129,7 @@ function lovr.draw()
     for i, box in ipairs(boxes) do drawBox(box, leftHit, rightHit) end
 
     drawDebug()
+    drawScore()
 end
 
 function nextNeededNumber() return boxes[next(boxes)].number end
@@ -155,4 +159,9 @@ function drawDebug()
         lovr.graphics.setColor(0.7, 0.6, 0)
         lovr.graphics.print("debug: " .. debugText, -1, 3.5, -3, 0.5, 0)
     end
+end
+
+function drawScore()
+    lovr.graphics.setColor(0.7, 0.6, 0)
+    lovr.graphics.print("Oopsies: " .. currentGame.mistakes, 0.75, 3.5, -3, 0.5, 0)
 end
