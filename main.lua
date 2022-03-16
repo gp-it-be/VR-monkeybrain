@@ -17,14 +17,24 @@ end
 function game:startRound()
     self.numbersVisible = true
 
+    local usedCoordinates = {}
+
     boxes = {}
-    i = 0;
-    for x = -0.25, 0.5, .25 do
-        for y = .875, 1.25, .24999 do
-            local box = world:newBoxCollider(x, y, -2 - y / 5, .25)
-            i = i + 1
-            local numberBlock = numberBlock.new(box, i)
-            boxes[i] = numberBlock
+
+    local placedBlocks = 0
+    while placedBlocks < 4 do
+
+        local r = math.random(0, 3)
+        local c = math.random(0, 4)
+        if usedCoordinates[r .. "," .. c] == nil then
+            usedCoordinates[r .. "," .. c] = true
+            placedBlocks = placedBlocks + 1
+
+            x = -0.25 + c * 0.25
+            y = .875 + r * 0.25
+            local box = world:newBoxCollider(x, y, -2.5, .25)
+            local numberBlock = numberBlock.new(box, placedBlocks)
+            boxes[placedBlocks] = numberBlock
         end
     end
 end
@@ -32,7 +42,6 @@ end
 function game:isRoundFinished() return next(boxes) == nil end
 
 function game:onHit(numberBlock)
-    debug(self.numbersVisible)
     if numberBlock.number == nextNeededNumber() then
         local removedbox = table.remove(boxes, 1)
         removedbox:destroy()
@@ -42,12 +51,11 @@ function game:onHit(numberBlock)
     end
 end
 
-function game:areNumbersVisible()
-    return self.numbersVisible
-end
-
+function game:areNumbersVisible() return self.numbersVisible end
 
 function lovr.load()
+    math.randomseed(os.time())
+
     world = lovr.physics.newWorld()
     world:setLinearDamping(.01)
     world:setAngularDamping(.005)
@@ -81,7 +89,6 @@ function lovr.update(dt)
         end
     end
 
-
     if currentGame:isRoundFinished() then currentGame:startRound() end
 end
 
@@ -103,8 +110,6 @@ function lovr.draw()
     for i, box in ipairs(boxes) do drawBox(box, hit) end
 
     lovr.graphics.setColor(0.7, 0.6, 0)
-    debug(tostring(currentGame:areNumbersVisible()))
-
     drawDebug()
 end
 
@@ -120,7 +125,6 @@ function drawBox(numberbox, hit)
     lovr.graphics.setColor(boxColor)
     lovr.graphics.cube('fill', x, y, z, .25, box:getOrientation())
 
- 
     if currentGame:areNumbersVisible() then
         lovr.graphics.setColor(0.7, 0.6, 0)
         lovr.graphics.print(numberbox.number, x, y, z + 0.15, 0.25)
