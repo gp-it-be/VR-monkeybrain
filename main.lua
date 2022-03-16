@@ -22,7 +22,7 @@ function game:startRound()
     boxes = {}
 
     local placedBlocks = 0
-    while placedBlocks < 4 do
+    while placedBlocks < 5 do
 
         local r = math.random(0, 3)
         local c = math.random(0, 4)
@@ -61,7 +61,14 @@ function lovr.load()
     world:setAngularDamping(.005)
     world:setGravity(0, 0, 0)
 
-    pointer:init({source = pointer.handWrapper.new("hand/left"), world = world})
+    leftPointer = pointer.new({
+        source = pointer.handWrapper.new("hand/left"),
+        world = world
+    })
+    rightPointer = pointer.new({
+        source = pointer.handWrapper.new("hand/right"),
+        world = world
+    })
 
     currentGame = game.new()
     currentGame:startRound()
@@ -75,25 +82,34 @@ end
 function lovr.update(dt)
     text = ""
 
-    pointer:update()
+    leftPointer:update()
+    rightPointer:update()
     world:update(dt)
 
+    local hit
     if lovr.headset.wasPressed("hand/left", "trigger") then
-        local hit = pointer:getHit()
-        if hit then
-            for i, box in ipairs(boxes) do
-                if box.collider == hit.collider then
-                    currentGame:onHit(box)
-                end
+        hit = leftPointer:getHit()
+    else
+        if lovr.headset.wasPressed("hand/right", "trigger") then
+            hit = rightPointer:getHit()
+        end
+    end
+    if hit then
+        for i, box in ipairs(boxes) do
+            if box.collider == hit.collider then
+                currentGame:onHit(box)
             end
         end
     end
-
-    if currentGame:isRoundFinished() then currentGame:startRound() end
+    
+    if currentGame:isRoundFinished()
+     then currentGame:startRound()
+    end
 end
 
 function lovr.draw()
-    local hit = pointer:getHit()
+    local leftHit = leftPointer:getHit()
+    local rightHit = rightPointer:getHit()
 
     for i, hand in ipairs(lovr.headset.getHands()) do
         local position = vec3(lovr.headset.getPosition(hand))
@@ -107,21 +123,21 @@ function lovr.draw()
         lovr.graphics.line(position, position + direction * 50)
     end
 
-    for i, box in ipairs(boxes) do drawBox(box, hit) end
+    for i, box in ipairs(boxes) do drawBox(box, leftHit, rightHit) end
 
-    lovr.graphics.setColor(0.7, 0.6, 0)
     drawDebug()
 end
 
 function nextNeededNumber() return boxes[next(boxes)].number end
 
-function drawBox(numberbox, hit)
+function drawBox(numberbox, leftHit, rightHit)
     if numberbox == nil then return end
 
     local box = numberbox.collider
     local x, y, z = box:getPosition()
-    local boxColor = (hit and hit.collider == box) and {0.50, 0.100, 0.200} or
-                         {0.20, 0.70, 0.170}
+    local isHit = (leftHit and leftHit.collider == box) or
+                      (rightHit and rightHit.collider == box)
+    local boxColor = isHit and {0.50, 0.100, 0.200} or {0.20, 0.70, 0.170}
     lovr.graphics.setColor(boxColor)
     lovr.graphics.cube('fill', x, y, z, .25, box:getOrientation())
 
