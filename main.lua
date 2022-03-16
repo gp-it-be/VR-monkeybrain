@@ -2,13 +2,22 @@
         X hoger -> naar rechts
         Y hoger -> naar boven
         Z lager -> naar voren
-     --]] pointer = require 'pointer'
+     --]] 
+pointer = require 'pointer'
+numberBlock = require 'numberBlock'
+
+
+
+
 
 function initBoxes()
+    i = 0;
     for x = -0.5, 0.5, .25 do
         for y = .875, 1.5, .24999 do
             local box = world:newBoxCollider(x, y, -2 - y / 5, .25)
-            table.insert(boxes, box)
+            i = i + 1
+            local numberBlock = numberBlock.new(box, i )
+            table.insert(boxes, numberBlock)
         end
     end
 end
@@ -41,7 +50,7 @@ function lovr.update(dt)
         local hit = pointer:getHit()
         if hit then
             for i, box in ipairs(boxes) do
-                if box == hit.collider then
+                if box.collider == hit.collider then
                     local removedbox = table.remove(boxes, i)
                     removedbox:destroy()
 
@@ -68,14 +77,6 @@ function lovr.draw()
         lovr.graphics.line(position, position + direction * 50)
     end
 
-    -- drawBox(1, 2)
-    -- drawBox(3, 2)
-    -- drawBox(8, 5)
-    -- drawBox(7, 4)
-    -- drawBox(0, 3)
-    -- drawBox(3, 6)
-    -- drawBox(4, 4)
-
     for i, box in ipairs(boxes) do drawBox2(box, hit) end
 
     lovr.graphics.setColor(0.7, 0.6, 0)
@@ -83,7 +84,8 @@ function lovr.draw()
 
 end
 
-function drawBox2(box, hit)
+function drawBox2(numberbox, hit)
+    local box = numberbox.collider
     local x, y, z = box:getPosition()
     local boxColor = (hit and hit.collider == box) and {0.50, 0.100, 0.200} or
                          {0.20, 0.70, 0.170}
@@ -93,16 +95,3 @@ function drawBox2(box, hit)
     -- lovr.graphics.print(hit or ".", x ,y, z +0.5, 0.5)
 
 end
-
-function drawBox(r, c)
-    scale = 0.3
-    x = (-10 + (2 * r)) * scale
-    y = (-5 + (2 * c)) * scale
-    z = -5 * scale
-    boxSize = 0.7 * scale
-    lovr.graphics.setColor(0.7, 0.6, 0)
-    lovr.graphics.cube('fill', x, y, z, boxSize, 0)
-end
-
--- lovr.controlleradded = refreshSource
--- lovr.controllerremoved = refreshSource
