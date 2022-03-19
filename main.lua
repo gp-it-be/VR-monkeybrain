@@ -20,6 +20,32 @@ end
 
 -- #endregion SelectScene
 
+-- #region Transition
+
+local transitionScene = {}
+transitionScene.__index = transitionScene
+
+function transitionScene.create(first, time)
+    local self = setmetatable({}, transitionScene)
+    self.time = time
+    return self
+end
+
+
+function transitionScene:update(dt)
+    self.time = self.time - dt
+    return self.time > 0
+end
+
+
+function transitionScene:draw()
+    
+    lovr.graphics.print("Transition: " , 0.75, 3.5, -3, 0.5,0)
+
+end
+
+-- #endregion Transition
+
 
 -- #region GameScene
 
@@ -54,6 +80,7 @@ function gameScene:update(dt)
     end
 
     if currentGame:isRoundFinished() then currentGame:startRound() end
+    return true
 end
 
 
@@ -137,13 +164,16 @@ end
 function game:areNumbersVisible() return self.numbersVisible end
 -- #endregion Game
 
+
+
+
 function lovr.load()
+
     math.randomseed(os.time())
 
     scenes = {}
     scenes[1] = gameScene:create()
-
-
+    table.insert(scenes, transitionScene:create(1.5))
 
 
     world = lovr.physics.newWorld()
@@ -170,18 +200,21 @@ function lovr.load()
 end
 
 function lovr.update(dt)
+    --print(dt)
     text = ""
 
     leftPointer:update()
     rightPointer:update()
-    local activeScene = scenes[1]
-    activeScene:update(dt)
+    local activeScene =  scenes[#scenes]
+    local sceneShouldStay = activeScene:update(dt)
+    if sceneShouldStay == false then
+        table.remove(scenes, #scenes)
+    end
 end
 
 function lovr.draw()
-    local activeScene = scenes[1]
+    local activeScene = scenes[#scenes]
     activeScene:draw()
-  
 end
 
 function nextNeededNumber() return boxes[next(boxes)].number end
