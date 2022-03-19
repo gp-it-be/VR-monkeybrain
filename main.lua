@@ -61,6 +61,7 @@ end
 
 
 function gameScene:update(dt)
+  
     world:update(dt)
 
     local hit
@@ -168,7 +169,14 @@ function game:areNumbersVisible() return self.numbersVisible end
 
 
 function lovr.load()
-
+    --This here is the reason.
+    --This here is the reason.
+    --This here is the reason.
+    lovr. --This here is the reason.
+    --This here is the reason.
+    --This here is the reason.
+    --This here is the reason.
+    --This here is the reason.
     math.randomseed(os.time())
 
     scenes = {}
