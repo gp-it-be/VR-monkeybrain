@@ -13,6 +13,7 @@ function game.new()
     local self = setmetatable({}, game)
     self.numbersVisible = true
     self.mistakes = 0
+    self.score = 0
     self.round = 0
     return self
 end
@@ -50,6 +51,7 @@ function game:onHit(numberBlock)
         local removedbox = table.remove(boxes, 1)
         removedbox:destroy()
         self.numbersVisible = false
+        self.score = self.score + numberBlock.number
     else
         self.mistakes = self.mistakes + 1
     end
@@ -164,4 +166,5 @@ end
 function drawScore()
     lovr.graphics.setColor(0.7, 0.6, 0)
     lovr.graphics.print("Oopsies: " .. currentGame.mistakes, 0.75, 3.5, -3, 0.5, 0)
+    lovr.graphics.print("Score: " .. currentGame.score, 0.75, 3.0, -3, 0.5, 0)
 end
