@@ -25,13 +25,21 @@ end
 local transitionScene = {}
 transitionScene.__index = transitionScene
 
-function transitionScene.create(first, time)
+function transitionScene.createFadeIn(first, time)
+    return transitionScene:create(time, true)
+end
+
+function transitionScene.createFadeOut(first, time)
+    return transitionScene:create(time, false)
+end
+
+function transitionScene.create(first, time, omega)
     local self = setmetatable({}, transitionScene)
     self.totaltime = time
     self.timeLeft = time
+    self.isFadeIn = omega
     return self
 end
-
 
 function transitionScene:update(dt)
     self.timeLeft = self.timeLeft - dt
@@ -39,13 +47,21 @@ function transitionScene:update(dt)
 end
 
 
-function transitionScene:draw()
+--sceneLevel is 0 when you are the top level scene
+--1 if theres 1 scene bove you, etc
+function transitionScene:draw(sceneLevel)
+    if sceneLevel ~= 0 then
+        return 
+    end
     x, y, z = lovr.headset.getPosition("head")
 
-    local fade = self.timeLeft / self.totaltime
+    local fade = (self.timeLeft / self.totaltime)
+    if self.isFadeIn then
+        fade = 1 - fade
+    end
 
-    lovr.graphics.setColor(1, 1, 1,fade)
-    lovr.graphics.sphere(x, y, z, 10)
+    lovr.graphics.setColor(0.9, 0.95, 0.9, fade)
+    lovr.graphics.sphere(x, y, z, 0.5)
 
 end
 
@@ -178,8 +194,8 @@ function lovr.load()
     math.randomseed(os.time())
 
     scenes = {}
-    scenes[1] = gameScene:create()
-    table.insert(scenes, transitionScene:create(0.5))
+    table.insert(scenes, gameScene:create())
+    table.insert(scenes, transitionScene:createFadeOut(0.5))
 
 
     world = lovr.physics.newWorld()
@@ -219,8 +235,9 @@ function lovr.update(dt)
 end
 
 function lovr.draw()
-    local activeScene = scenes[#scenes]
-    activeScene:draw()
+    for i, scene in ipairs(scenes) do
+        scene:draw(#scenes - i)
+    end
 end
 
 function nextNeededNumber() return boxes[next(boxes)].number end
