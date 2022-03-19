@@ -27,20 +27,25 @@ transitionScene.__index = transitionScene
 
 function transitionScene.create(first, time)
     local self = setmetatable({}, transitionScene)
-    self.time = time
+    self.totaltime = time
+    self.timeLeft = time
     return self
 end
 
 
 function transitionScene:update(dt)
-    self.time = self.time - dt
-    return self.time > 0
+    self.timeLeft = self.timeLeft - dt
+    return self.timeLeft > 0
 end
 
 
 function transitionScene:draw()
-    
-    lovr.graphics.print("Transition: " , 0.75, 3.5, -3, 0.5,0)
+    x, y, z = lovr.headset.getPosition("head")
+
+    local fade = self.timeLeft / self.totaltime
+
+    lovr.graphics.setColor(1, 1, 1,fade)
+    lovr.graphics.sphere(x, y, z, 10)
 
 end
 
@@ -165,15 +170,16 @@ function game:areNumbersVisible() return self.numbersVisible end
 -- #endregion Game
 
 
-
+function lovr.errhand(message)
+    print(message)
+end
 
 function lovr.load()
-
     math.randomseed(os.time())
 
     scenes = {}
     scenes[1] = gameScene:create()
-    table.insert(scenes, transitionScene:create(1.5))
+    table.insert(scenes, transitionScene:create(0.5))
 
 
     world = lovr.physics.newWorld()
