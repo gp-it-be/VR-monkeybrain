@@ -1,9 +1,86 @@
 --[[
-        X hoger -> naar rechts
-        Y hoger -> naar boven
-        Z lager -> naar voren
-     --]] pointer = require 'pointer'
+    X hoger -> naar rechts
+    Y hoger -> naar boven
+    Z lager -> naar voren
+    --]] pointer = require 'pointer'
 numberBlock = require 'numberBlock'
+
+Gamestate = {["SELECT"] = 1, ["PLAY"] = 2, ["END"] = 3}
+
+-- #region SelectScene
+
+local selectScene = {}
+selectScene.__index = selectScene
+
+function selectScene.create()
+    local self = setmetatable({}, selectScene)
+    return self
+end
+
+
+-- #endregion SelectScene
+
+
+-- #region GameScene
+
+local gameScene = {}
+gameScene.__index = gameScene
+
+function gameScene.create()
+    local self = setmetatable({}, gameScene)
+
+
+    return self
+end
+
+
+function gameScene:update(dt)
+    world:update(dt)
+
+    local hit
+    if lovr.headset.wasPressed("hand/left", "trigger") then
+        hit = leftPointer:getHit()
+    else
+        if lovr.headset.wasPressed("hand/right", "trigger") then
+            hit = rightPointer:getHit()
+        end
+    end
+    if hit then
+        for i, box in ipairs(boxes) do
+            if box.collider == hit.collider then
+                currentGame:onHit(box)
+            end
+        end
+    end
+
+    if currentGame:isRoundFinished() then currentGame:startRound() end
+end
+
+
+function gameScene:draw()
+    local leftHit = leftPointer:getHit()
+    local rightHit = rightPointer:getHit()
+
+    for i, hand in ipairs(lovr.headset.getHands()) do
+        local position = vec3(lovr.headset.getPosition(hand))
+        local direction = quat(lovr.headset.getOrientation(hand)):direction()
+
+        lovr.graphics.setColor(1, 1, 1)
+        lovr.graphics.sphere(position, .01)
+        lovr.graphics.print(hand, position, 0.02)
+
+        lovr.graphics.setColor(1, 0, 0)
+        lovr.graphics.line(position, position + direction * 50)
+    end
+
+    for i, box in ipairs(boxes) do drawBox(box, leftHit, rightHit) end
+
+    drawDebug()
+    drawScore()
+end
+
+-- #endregion GameScene
+
 
 -- #region Game
 local game = {}
@@ -63,6 +140,12 @@ function game:areNumbersVisible() return self.numbersVisible end
 function lovr.load()
     math.randomseed(os.time())
 
+    scenes = {}
+    scenes[1] = gameScene:create()
+
+
+
+
     world = lovr.physics.newWorld()
     world:setLinearDamping(.01)
     world:setAngularDamping(.005)
@@ -91,47 +174,14 @@ function lovr.update(dt)
 
     leftPointer:update()
     rightPointer:update()
-    world:update(dt)
-
-    local hit
-    if lovr.headset.wasPressed("hand/left", "trigger") then
-        hit = leftPointer:getHit()
-    else
-        if lovr.headset.wasPressed("hand/right", "trigger") then
-            hit = rightPointer:getHit()
-        end
-    end
-    if hit then
-        for i, box in ipairs(boxes) do
-            if box.collider == hit.collider then
-                currentGame:onHit(box)
-            end
-        end
-    end
-
-    if currentGame:isRoundFinished() then currentGame:startRound() end
+    local activeScene = scenes[1]
+    activeScene:update(dt)
 end
 
 function lovr.draw()
-    local leftHit = leftPointer:getHit()
-    local rightHit = rightPointer:getHit()
-
-    for i, hand in ipairs(lovr.headset.getHands()) do
-        local position = vec3(lovr.headset.getPosition(hand))
-        local direction = quat(lovr.headset.getOrientation(hand)):direction()
-
-        lovr.graphics.setColor(1, 1, 1)
-        lovr.graphics.sphere(position, .01)
-        lovr.graphics.print(hand, position, 0.02)
-
-        lovr.graphics.setColor(1, 0, 0)
-        lovr.graphics.line(position, position + direction * 50)
-    end
-
-    for i, box in ipairs(boxes) do drawBox(box, leftHit, rightHit) end
-
-    drawDebug()
-    drawScore()
+    local activeScene = scenes[1]
+    activeScene:draw()
+  
 end
 
 function nextNeededNumber() return boxes[next(boxes)].number end
@@ -165,6 +215,7 @@ end
 
 function drawScore()
     lovr.graphics.setColor(0.7, 0.6, 0)
-    lovr.graphics.print("Oopsies: " .. currentGame.mistakes, 0.75, 3.5, -3, 0.5, 0)
+    lovr.graphics.print("Oopsies: " .. currentGame.mistakes, 0.75, 3.5, -3, 0.5,
+                        0)
     lovr.graphics.print("Score: " .. currentGame.score, 0.75, 3.0, -3, 0.5, 0)
 end
