@@ -1,5 +1,3 @@
--- #region GameScene
-
 gameScene = {}
 gameScene.__index = gameScene
 
@@ -116,7 +114,8 @@ function game:onHit(numberBlock)
         self.score = self.score + numberBlock.number
     else
         --TODO make this change state of the game to game over? Of een game over scene erboven? die highscores etc toont
-        scenes[#scenes] = selectScene:create()
+        --scenes[#scenes] = selectScene:create()
+        scenes[#scenes+1] = hiscoreScene:create(self.score, "HARDCORE ENDURANCE")
         scenes[#scenes+1] = transitionScene:createFadeOut(0.5)
         
     end

@@ -3,6 +3,7 @@ numberBlock = require 'numberBlock'
 selectScene = require 'selectScene'
 transitionScene = require 'transitionScene'
 gameScene = require 'gameScene'
+hiscoreScene = require 'hiscoreScene' --TODO remove?
 
 Gamestate = {["PLAY"] = 1, ["GAMEOVER"] = 2}
 
@@ -21,7 +22,8 @@ function lovr.load()
     world:setGravity(0, 0, 0)
 
     scenes = {}
-    table.insert(scenes, selectScene:create())
+    table.insert(scenes, hiscoreScene:create(10, "HARDCORE"))
+    --table.insert(scenes, selectScene:create())
     table.insert(scenes, transitionScene:createFadeOut(0.5))
 
     leftPointer = pointer.new({
@@ -59,5 +61,4 @@ function lovr.draw()
         scene:draw(#scenes - i - amountSeeThrough)
     end
 end
-
 
