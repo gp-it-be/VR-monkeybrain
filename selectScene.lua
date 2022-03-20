@@ -71,6 +71,18 @@ function selectScene:draw(sceneLevel)
     lovr.graphics.print("Monkey Brain", -0.1, 2.8, -2, 0.40)
 end
 
+function drawBox(numberbox, leftHit, rightHit)
+    local box = numberbox.collider
+    local x, y, z = box:getPosition()
+    local isHit = (leftHit and leftHit.collider == box) or
+                      (rightHit and rightHit.collider == box)
+    local boxColor = isHit and {0.50, 0.100, 0.200} or {0.20, 0.70, 0.170}
+    lovr.graphics.setColor(boxColor)
+    lovr.graphics.cube('fill', x, y, z, .25, box:getOrientation())
+
+    lovr.graphics.setColor(0.7, 0.6, 0)
+    lovr.graphics.print(numberbox.number, x, y, z + 0.15, 0.25)
+end
 
 
 return selectScene
