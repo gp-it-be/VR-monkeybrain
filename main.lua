@@ -12,11 +12,69 @@ Gamestate = {["SELECT"] = 1, ["PLAY"] = 2, ["END"] = 3}
 local selectScene = {}
 selectScene.__index = selectScene
 
+
+
 function selectScene.create()
     local self = setmetatable({}, selectScene)
+    self.selectBoxes = {}
+    self:init()
     return self
 end
 
+
+function selectScene:init()
+    x = -0.25 
+    y = .875 
+    local box = world:newBoxCollider(x, y + 0.5, -2.5, .25)
+    self.selectBoxes[1] = numberBlock.new(box, "Endurance")
+
+    local box = world:newBoxCollider(x, y, -2.5, .25)
+    self.selectBoxes[2] = numberBlock.new(box, "Training")
+end
+
+
+function selectScene:update(dt)
+    local hit
+    if lovr.headset.wasPressed("hand/left", "trigger") then
+        hit = leftPointer:getHit()
+    else
+        if lovr.headset.wasPressed("hand/right", "trigger") then
+            hit = rightPointer:getHit()
+        end
+    end
+    if hit then
+        for i, box in ipairs(self.selectBoxes) do
+            if box.collider == hit.collider then
+                print(box.number)
+            end
+        end
+    end
+    return true
+end
+
+function selectScene:draw(sceneLevel)
+    if sceneLevel ~= 0 then
+        return 
+    end
+    local leftHit = leftPointer:getHit()
+    local rightHit = rightPointer:getHit()
+
+    for i, hand in ipairs(lovr.headset.getHands()) do
+        local position = vec3(lovr.headset.getPosition(hand))
+        local direction = quat(lovr.headset.getOrientation(hand)):direction()
+
+        lovr.graphics.setColor(1, 1, 1)
+        lovr.graphics.sphere(position, .01)
+        lovr.graphics.print(hand, position, 0.02)
+
+        lovr.graphics.setColor(1, 0, 0)
+        lovr.graphics.line(position, position + direction * 50)
+    end
+
+    for i, box in ipairs(self.selectBoxes) do drawBox(box, leftHit, rightHit) end
+
+    lovr.graphics.print("Monkey Brain", -0.1, 2.8, -2, 0.40)
+end
 
 -- #endregion SelectScene
 
@@ -50,9 +108,9 @@ end
 --sceneLevel is 0 when you are the top level scene
 --1 if theres 1 scene bove you, etc
 function transitionScene:draw(sceneLevel)
-    if sceneLevel ~= 0 then
-        return 
-    end
+    -- if sceneLevel ~= 0 then
+    --     return 
+    -- end
     x, y, z = lovr.headset.getPosition("head")
 
     local fade = (self.timeLeft / self.totaltime)
@@ -65,6 +123,12 @@ function transitionScene:draw(sceneLevel)
 
 end
 
+
+function transitionScene:isSeeThrough()
+    print("asles")
+    return true
+end
+
 -- #endregion Transition
 
 
@@ -75,8 +139,6 @@ gameScene.__index = gameScene
 
 function gameScene.create()
     local self = setmetatable({}, gameScene)
-
-
     return self
 end
 
@@ -192,16 +254,19 @@ end
 
 function lovr.load()
     math.randomseed(os.time())
-
-    scenes = {}
-    table.insert(scenes, gameScene:create())
-    table.insert(scenes, transitionScene:createFadeOut(0.5))
-
-
+    print("world initting")
     world = lovr.physics.newWorld()
     world:setLinearDamping(.01)
     world:setAngularDamping(.005)
     world:setGravity(0, 0, 0)
+
+    scenes = {}
+    --table.insert(scenes, gameScene:create())
+    table.insert(scenes, selectScene:create())
+    table.insert(scenes, transitionScene:createFadeOut(0.5))
+
+
+ 
 
     leftPointer = pointer.new({
         source = pointer.handWrapper.new("hand/left"),
@@ -235,8 +300,17 @@ function lovr.update(dt)
 end
 
 function lovr.draw()
+    local amountSeeThrough = 0
     for i, scene in ipairs(scenes) do
-        scene:draw(#scenes - i)
+        if scene.isSeeThrough and scene:isSeeThrough() then
+        amountSeeThrough = amountSeeThrough + 1
+        end
+    end
+
+
+
+    for i, scene in ipairs(scenes) do
+        scene:draw(#scenes - i - amountSeeThrough)
     end
 end
 
