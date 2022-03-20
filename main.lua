@@ -1,138 +1,11 @@
---[[
-    X hoger -> naar rechts
-    Y hoger -> naar boven
-    Z lager -> naar voren
-    --]] pointer = require 'pointer'
+pointer = require 'pointer'
 numberBlock = require 'numberBlock'
+selectScene = require 'selectScene'
+transitionScene = require 'transitionScene'
 
-Gamestate = {["SELECT"] = 1, ["PLAY"] = 2, ["END"] = 3}
-
--- #region SelectScene
-
-local selectScene = {}
-selectScene.__index = selectScene
+Gamestate = {["PLAY"] = 1, ["GAMEOVER"] = 2}
 
 
-
-function selectScene.create()
-    local self = setmetatable({}, selectScene)
-    self.selectBoxes = {}
-    self:init()
-    return self
-end
-
-
-function selectScene:init()
-    x = -0.25 
-    y = .875 
-    local box = world:newBoxCollider(x, y + 0.5, -2.5, .25)
-    self.selectBoxes[1] = numberBlock.new(box, "Endurance")
-
-    local box = world:newBoxCollider(x, y, -2.5, .25)
-    self.selectBoxes[2] = numberBlock.new(box, "Training")
-end
-
-
-function selectScene:update(dt)
-    local hit
-    if lovr.headset.wasPressed("hand/left", "trigger") then
-        hit = leftPointer:getHit()
-    else
-        if lovr.headset.wasPressed("hand/right", "trigger") then
-            hit = rightPointer:getHit()
-        end
-    end
-    if hit then
-        for i, box in ipairs(self.selectBoxes) do
-            if box.collider == hit.collider then
-                if box.number == "Endurance" then
-                    scenes[#scenes] = nil
-                    scenes[#scenes+1] = gameScene:create() 
-                end
-            end
-        end
-    end
-    return true
-end
-
-function selectScene:draw(sceneLevel)
-    if sceneLevel ~= 0 then
-        return 
-    end
-    local leftHit = leftPointer:getHit()
-    local rightHit = rightPointer:getHit()
-
-    for i, hand in ipairs(lovr.headset.getHands()) do
-        local position = vec3(lovr.headset.getPosition(hand))
-        local direction = quat(lovr.headset.getOrientation(hand)):direction()
-
-        lovr.graphics.setColor(1, 1, 1)
-        lovr.graphics.sphere(position, .01)
-        lovr.graphics.print(hand, position, 0.02)
-
-        lovr.graphics.setColor(1, 0, 0)
-        lovr.graphics.line(position, position + direction * 50)
-    end
-
-    for i, box in ipairs(self.selectBoxes) do drawBox(box, leftHit, rightHit) end
-
-    lovr.graphics.print("Monkey Brain", -0.1, 2.8, -2, 0.40)
-end
-
--- #endregion SelectScene
-
--- #region Transition
-
-local transitionScene = {}
-transitionScene.__index = transitionScene
-
-function transitionScene.createFadeIn(first, time)
-    return transitionScene:create(time, true)
-end
-
-function transitionScene.createFadeOut(first, time)
-    return transitionScene:create(time, false)
-end
-
-function transitionScene.create(first, time, omega)
-    local self = setmetatable({}, transitionScene)
-    self.totaltime = time
-    self.timeLeft = time
-    self.isFadeIn = omega
-    return self
-end
-
-function transitionScene:update(dt)
-    self.timeLeft = self.timeLeft - dt
-    return self.timeLeft > 0
-end
-
-
---sceneLevel is 0 when you are the top level scene
---1 if theres 1 scene bove you, etc
-function transitionScene:draw(sceneLevel)
-    -- if sceneLevel ~= 0 then
-    --     return 
-    -- end
-    x, y, z = lovr.headset.getPosition("head")
-
-    local fade = (self.timeLeft / self.totaltime)
-    if self.isFadeIn then
-        fade = 1 - fade
-    end
-
-    lovr.graphics.setColor(0.9, 0.95, 0.9, fade)
-    lovr.graphics.sphere(x, y, z, 0.5)
-
-end
-
-
-function transitionScene:isSeeThrough()
-    print("asles")
-    return true
-end
-
--- #endregion Transition
 
 
 -- #region GameScene
@@ -188,7 +61,6 @@ function gameScene:draw()
 
     for i, box in ipairs(boxes) do drawBox(box, leftHit, rightHit) end
 
-    drawDebug()
     drawScore()
 end
 
@@ -202,7 +74,6 @@ game.__index = game
 function game.new()
     local self = setmetatable({}, game)
     self.numbersVisible = true
-    self.mistakes = 0
     self.score = 0
     self.round = 0
     return self
@@ -244,7 +115,10 @@ function game:onHit(numberBlock)
         self.numbersVisible = false
         self.score = self.score + numberBlock.number
     else
-        self.mistakes = self.mistakes + 1
+        --TODO make this change state of the game to game over? Of een game over scene erboven? die highscores etc toont
+        scenes[#scenes] = selectScene:create()
+        scenes[#scenes+1] = transitionScene:createFadeOut(0.5)
+        
     end
 end
 
@@ -338,18 +212,8 @@ function drawBox(numberbox, leftHit, rightHit)
 
 end
 
-function debug(text) debugText = text end
-
-function drawDebug()
-    if debugText ~= nil then
-        lovr.graphics.setColor(0.7, 0.6, 0)
-        lovr.graphics.print("debug: " .. debugText, -1, 3.5, -3, 0.5, 0)
-    end
-end
 
 function drawScore()
     lovr.graphics.setColor(0.7, 0.6, 0)
-    lovr.graphics.print("Oopsies: " .. currentGame.mistakes, 0.75, 3.5, -3, 0.5,
-                        0)
     lovr.graphics.print("Score: " .. currentGame.score, 0.75, 3.0, -3, 0.5, 0)
 end
