@@ -45,7 +45,10 @@ function selectScene:update(dt)
     if hit then
         for i, box in ipairs(self.selectBoxes) do
             if box.collider == hit.collider then
-                print(box.number)
+                if box.number == "Endurance" then
+                    scenes[#scenes] = nil
+                    scenes[#scenes+1] = gameScene:create() 
+                end
             end
         end
     end
@@ -134,7 +137,7 @@ end
 
 -- #region GameScene
 
-local gameScene = {}
+gameScene = {}
 gameScene.__index = gameScene
 
 function gameScene.create()
@@ -225,6 +228,7 @@ function game:startRound()
             x = -0.25 + c * 0.25
             y = .875 + r * 0.25
             local box = world:newBoxCollider(x, y, -2.5, .25)
+            box:setKinematic(true)
             local numberBlock = numberBlock.new(box, placedBlocks)
             boxes[placedBlocks] = numberBlock
         end
