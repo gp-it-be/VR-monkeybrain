@@ -18,9 +18,10 @@ function selectScene:init()
     y = .875 
     local box = world:newBoxCollider(x, y + 0.5, -2.5, .25)
     self.selectBoxes[1] = numberBlock.new(box, "Hardcore Endurance")
-
+    
     local box = world:newBoxCollider(x, y, -2.5, .25)
     self.selectBoxes[2] = numberBlock.new(box, "Training")
+    tapSound = lovr.audio.newSource('short.wav')
 end
 
 
@@ -39,6 +40,9 @@ function selectScene:update(dt)
                 if box.number == "Hardcore Endurance" then
                     scenes[#scenes] = nil
                     scenes[#scenes+1] = gameScene:create() 
+                else
+                    tapSound:stop()
+                    tapSound:play()
                 end
             end
         end

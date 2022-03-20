@@ -67,16 +67,17 @@ game = {}
 game.__index = game
 
 function game.new()
-    print("new game")
     local self = setmetatable({}, game)
     self.numbersVisible = true
     self.score = 0
     self.round = 0
+
+    tapSound = lovr.audio.newSource('short.wav')
+
     return self
 end
 
 function game:startRound()
-    print("start round")
     self.numbersVisible = true
     self.round = self.round + 1
 
@@ -107,6 +108,8 @@ function game:isRoundFinished() return next(boxes) == nil end
 
 function game:onHit(numberBlock)
     if numberBlock.number == nextNeededNumber() then
+        tapSound:stop()
+        tapSound:play()
         local removedbox = table.remove(boxes, 1)
         removedbox:destroy()
         self.numbersVisible = false

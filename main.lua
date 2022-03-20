@@ -11,6 +11,8 @@ function lovr.errhand(message)
 end
 
 function lovr.load()
+
+
     math.randomseed(os.time())
     print("world initting")
     world = lovr.physics.newWorld()
