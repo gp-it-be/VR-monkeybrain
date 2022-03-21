@@ -5,7 +5,7 @@ transitionScene = require 'transitionScene'
 gameScene = require 'gameScene'
 hiscoreScene = require 'hiscoreScene' --TODO remove?
 
-Gamestate = {["PLAY"] = 1, ["GAMEOVER"] = 2}
+
 
 function lovr.errhand(message)
     print(message)
