@@ -22,8 +22,8 @@ function lovr.load()
     world:setGravity(0, 0, 0)
 
     scenes = {}
-    table.insert(scenes, hiscoreScene:create(10, "HARDCORE"))
-    --table.insert(scenes, selectScene:create())
+    --table.insert(scenes, hiscoreScene:create(9, "HARDCORE"))
+    table.insert(scenes, selectScene:create())
     table.insert(scenes, transitionScene:createFadeOut(0.5))
 
     leftPointer = pointer.new({
