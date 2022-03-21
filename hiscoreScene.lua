@@ -1,21 +1,24 @@
-
-local letters = require 'lovr-letters.letters'
-
 hiscoreScene = {}
 hiscoreScene.__index = hiscoreScene
 
 existingScores = {}
 
+local rows = {
+    {'CONFIRM'}, {}, {'backspace'}, {'z', 'x', 'c', 'v', 'b', 'n', 'm'},
+    {'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'},
+    {'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'},
+    {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'}
+}
+
 hiscoreScene.amountOfScores = 5
+
+enteredName = ""
 
 function hiscoreScene.create(_, score, gameMode)
     local self = setmetatable({}, hiscoreScene)
     self.score = score
     self.gameMode = gameMode
     hiscoreScene:load(score)
-    letters.load()
-    --letters.defaultKeyboard = letters.HoverKeyboard
-    myKeyboard = letters.HoverKeyboard:new{world=letters.world}
     return self
 end
 
@@ -31,14 +34,46 @@ function hiscoreScene:load(score)
     self.scoreRank = determineNewScoreRank(score, existingScores)
     if self.scoreRank <= hiscoreScene.amountOfScores then
         self.state = "ASKING_NAME"
-        
+        keyBlocks = {}
+        for rowIndex, row in ipairs(rows) do
+            for keyIndex, key in ipairs(row) do
+                local box = world:newBoxCollider(0 + keyIndex * 0.3,
+                                                 0 + rowIndex * 0.3, -2.5, .25)
+                local numberBlock = numberBlock.new(box, key)
+                keyBlocks[#keyBlocks + 1] = numberBlock
+            end
+        end
+
     else
         self.state = "VISUALISING"
     end
 end
 
-function hiscoreScene:update() 
-    letters.update()
+function hiscoreScene:update(dt)
+    local hit
+    if lovr.headset.wasPressed("hand/left", "trigger") then
+        hit = leftPointer:getHit()
+    else
+        if lovr.headset.wasPressed("hand/right", "trigger") then
+            hit = rightPointer:getHit()
+        end
+    end
+    if hit then
+        for i, box in ipairs(keyBlocks) do
+            if box.collider == hit.collider then
+                if box.number == "CONFIRM" then
+                    -- TODO add the score , save, change state
+                end
+                if box.number == "backspace" then
+                    enteredName = substring(enteredName, 1, 3)
+                end
+                if box.number ~= "CONFIRM" and box.number ~= "backspace" then
+                    enteredName = enteredName .. box.number
+                end
+            end
+        end
+    end
+    return true
 end
 
 function hiscoreScene:draw()
@@ -56,11 +91,39 @@ function hiscoreScene:draw()
     end
 
     if self.state == "ASKING_NAME" then
-        print("asking name")
-        myKeyboard:draw()
+
+        lovr.graphics.setColor(0.7, 0.7, 0.9)
+        lovr.graphics.print("ENTER NAME: "  .. enteredName .. flickeringDash(),
+                            -0.1, 0, -2, 0.20)
+
+        local leftHit = leftPointer:getHit()
+        local rightHit = rightPointer:getHit()
+
+        for i, hand in ipairs(lovr.headset.getHands()) do
+            local position = vec3(lovr.headset.getPosition(hand))
+            local direction =
+                quat(lovr.headset.getOrientation(hand)):direction()
+
+            lovr.graphics.setColor(1, 1, 1)
+            lovr.graphics.sphere(position, .01)
+            lovr.graphics.print(hand, position, 0.02)
+
+            lovr.graphics.setColor(1, 0, 0)
+            lovr.graphics.line(position, position + direction * 50)
+        end
+
+        for i, box in ipairs(keyBlocks) do
+            drawBox(box, leftHit, rightHit)
+        end
     else
         print("VISUALI")
     end
+
+end
+
+function flickeringDash()
+    if (os.time() % 2 < 1) then return "_" end
+    return " "
 
 end
 
